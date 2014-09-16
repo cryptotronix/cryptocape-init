@@ -26,8 +26,14 @@ if [[ crypto_cape_attached_p -ne 0 ]]; then
     exit 1
 fi
 
-part1(){
+prelude(){
     apt-get install -y git trousers tpm-tools libtspi1 libtspi-dev build-essential
+    git clone https://github.com/cryptotronix/cryptocape-init.git
+    cryptocape-init/"basename $0"
+}
+
+part1(){
+
 
     gcc tpm_assert/tpm_assertpp.c -o tpm_assertpp
 
@@ -100,6 +106,7 @@ part2(){
         echo "Command failed."
         echo "$OWN_RESULT" | grep "Internal software error"
         if [[ "$?" == 0 ]]; then
+            echo "Internal Software Error: halting. Remove and re-apply power and try again."
             halt
         fi
 
@@ -109,6 +116,10 @@ part2(){
 }
 
 ## main
+
+if [[ "$1" == "prelude" ]]; then
+    prelude
+fi
 
 print_tpm_status
 
