@@ -21,6 +21,46 @@ tpm_owned(){
     TPM_OWNED=$(cat /sys/class/misc/tpm0/device/owned)
 }
 
+running_systemd_p(){
+    INITSYS="ps h -p 1 -o comm"
+    [ "$INITSYS" = "systemd" ]
+}
+
+tcsd_running_p(){
+    pgrep tcsd 2>/dev/null 1>/dev/null
+    [ $? -eq 0 ]
+}
+
+stop_tcsd(){
+    echo "Stopping TCSD"
+    if [ tcsd_running_p -eq 0 ]; then
+        if [ running_systemd_p -eq 0 ]; then
+            systemctl trousers.service stop
+        else
+            service trousers stop
+        fi
+
+        if [ tcsd_running_p -eq 0 ]; then
+            pkill tcsd
+        fi
+    fi
+}
+
+start_tcsd(){
+    echo "Starting TCSD"
+    if [ tcsd_running_p -ne 0 ]; then
+        if [ running_systemd_p -eq 0 ]; then
+            systemctl trousers.service start
+        else
+            service trousers start
+        fi
+
+        if [ tcsd_running_p -ne 0 ]; then
+            tcsd
+        fi
+    fi
+}
+
 if [[ crypto_cape_attached_p -ne 0 ]]; then
     echo "You must boot with the CryptoCape attached"
     exit 1
@@ -36,8 +76,7 @@ part1(){
 
     gcc tpm_assert/tpm_assertpp.c -o tpm_assertpp
 
-    echo Killing tcsd
-    pkill tcsd
+    stop_tcsd
 
     echo Setting PP
     ./tpm_assertpp
@@ -47,8 +86,7 @@ part1(){
         exit 1
     fi
 
-    echo Restarting tcsd
-    tcsd
+    start_tcsd
 
     echo Clearing the TPM
     tpm_clear -f
