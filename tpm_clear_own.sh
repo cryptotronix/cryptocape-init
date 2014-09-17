@@ -28,12 +28,11 @@ fi
 
 prelude(){
     apt-get install -y git trousers tpm-tools libtspi1 libtspi-dev build-essential
-    git clone https://github.com/cryptotronix/cryptocape-init.git
-    cryptocape-init/"basename $0"
 }
 
 part1(){
 
+    prelude
 
     gcc tpm_assert/tpm_assertpp.c -o tpm_assertpp
 
@@ -116,10 +115,6 @@ part2(){
 }
 
 ## main
-
-if [[ "$1" == "prelude" ]]; then
-    prelude
-fi
 
 print_tpm_status
 
