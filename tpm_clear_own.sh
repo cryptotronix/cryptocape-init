@@ -5,20 +5,27 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
+#tpm sys moved, so let's check for the new dir...
+#https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=313d21eeab9282e01fdcecd40e9ca87e0953627f
+sys_tpm="/sys/class/tpm"
+if [ ! -d ${sys_tpm}/tpm0/ ] ; then
+    sys_tpm="/sys/class/misc"
+fi
+
 crypto_cape_attached_p(){
     dmesg | grep "dtbo 'BB-BONE-CRYPTO-00A0.dtbo' loaded"
 }
 
 tpm_active(){
-    TPM_ACTIVE=$(cat /sys/class/misc/tpm0/device/active)
+    TPM_ACTIVE=$(cat ${sys_tpm}/tpm0/device/active)
 }
 
 tpm_enabled(){
-    TPM_ENABLED=$(cat /sys/class/misc/tpm0/device/enabled)
+    TPM_ENABLED=$(cat ${sys_tpm}/tpm0/device/enabled)
 }
 
 tpm_owned(){
-    TPM_OWNED=$(cat /sys/class/misc/tpm0/device/owned)
+    TPM_OWNED=$(cat ${sys_tpm}/tpm0/device/owned)
 }
 
 if [[ crypto_cape_attached_p -ne 0 ]]; then
@@ -75,7 +82,7 @@ print_tpm_status(){
 
 is_compliance_vector_loaded(){
     C_PUBEK_START="AB 56 7C 0E 60 8C 5C 18 9E 90 2C 37 32 CF E3 FE"
-    cat /sys/class/misc/tpm0/device/pubek | grep "^$C_PUBEK_START"
+    cat ${sys_tpm}/tpm0/device/pubek | grep "^$C_PUBEK_START"
 }
 
 need_EK(){
